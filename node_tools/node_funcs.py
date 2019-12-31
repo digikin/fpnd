@@ -38,14 +38,7 @@ def get_moon_data():
 
 # we need to enforce a timeout for now
 def load_moon_data(cache, timeout=9):
-    import time
     moon_data = get_moon_data()
-    key_list = find_keys(cache, 'moon')
-    while not moon_data:
-        for s in range(timeout):
-            moon_data = get_moon_data()
-            time.sleep(1)
-        break
     if moon_data:
         load_cache_by_type(cache, moon_data, 'moon')
         return True

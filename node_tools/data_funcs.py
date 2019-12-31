@@ -9,7 +9,8 @@ import functools
 
 from diskcache import Index
 
-from node_tools.cache_funcs import get_active_moon, get_node_status
+from node_tools.cache_funcs import get_node_status
+from node_tools.cache_funcs import get_peer_status
 from node_tools.helper_funcs import update_state, get_cachedir
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 
@@ -24,17 +25,20 @@ except ImportError:
 logger = logging.getLogger(__name__)
 cache = Index(get_cachedir())
 max_age = NODE_SETTINGS['max_cache_age']
-moon_list = NODE_SETTINGS['moon_list']
+id_list = NODE_SETTINGS['moon_list']
 
 
-def do_announce_node(cache, moon_list):
-    Moon = get_active_moon(cache, moon_list)
-    if Moon:
+def do_announce_node(id_list):
+    moons = find_moons(id_list)
+    if moons:
         # send nanoservice client request
-        logger.debug('Send msg to {} with addr: {}'.format(Moon.identity, Moon.address))
+        logger.debug('Send msg to {} with addr: {}'.format(moons[0].identity, moons[0].address))
+        return 'OK'
+    else:
+        return None
 
 
-def do_log_node_data(cache):
+def do_log_node_data():
     nodeStatus = get_node_status(cache)
     logger.debug('Node status tuple: {}'.format(nodeStatus))
 
@@ -46,6 +50,27 @@ def do_logstats(msg=None):
         logger.debug(msg)
     logger.debug('{} items currently in cache.'.format(size))
     logger.debug('Cache items: {}'.format(list(cache)))
+
+
+def find_moons(id_list):
+    """
+    Find fpn moon(s) using cached peer data.
+    :param cache: <cache> object
+    :param id_list: list of moon IDs from settings
+    :return moons: list of namedTuples for matching moons
+    """
+    peers = get_peer_status(cache)
+    moons = []
+    logger.debug('Entering peer loop with: {}'.format(peers))
+    if peers:
+        for Peer in peers:
+            if 'MOON' in Peer.role:
+                logger.debug('Found moon in peers: {}'.format(Peer.identity))
+                for id in id_list:
+                    if Peer.identity == id:
+                        moons.append(Peer)
+                logger.debug('Exiting id_list with: {}'.format(moons))
+    return moons
 
 
 def with_cache_aging(func):

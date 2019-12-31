@@ -10,6 +10,7 @@ import datetime
 import logging
 import schedule
 
+from diskcache import Index
 from daemon import Daemon
 from daemon.parent_logger import setup_logging
 
@@ -36,6 +37,7 @@ else:
 
 logger = logging.getLogger(__name__)
 
+cache = Index(get_cachedir())
 max_age = NODE_SETTINGS['max_cache_age']
 moons = NODE_SETTINGS['moon_list']  # list of fpn moons to orbiit
 timestamp = datetime.datetime.now(utc)  # use local time for console
@@ -107,11 +109,12 @@ def do_scheduling():
     for moon in moons:
         res = run_moon_cmd(moon, action='orbit')
 
-    moon_list = get_moon_data()
-    logger.debug('Moon data size: {}'.format(len(moon_list)))
-    logger.debug('Moon data type is: {}'.format(type(moon_list)))
+    moon_metadata = get_moon_data()
+    logger.debug('Moon data size: {}'.format(len(moon_metadata)))
+    logger.debug('Moon data type is: {}'.format(type(moon_metadata)))
 
-    do_announce_node(cache, moons)
+    # peer_moons = find_moons(moons)
+    do_announce_node(moons)
 
     logger.debug('Entering schedule.run_pending loop')
     while True:

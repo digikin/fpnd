@@ -15,14 +15,13 @@ from node_tools.helper_funcs import json_dump_file
 from node_tools.helper_funcs import json_load_file
 from node_tools.helper_funcs import update_state
 from node_tools.cache_funcs import find_keys
-from node_tools.cache_funcs import find_fpn_moons
-from node_tools.cache_funcs import get_active_moon
 from node_tools.cache_funcs import get_endpoint_data
 from node_tools.cache_funcs import get_net_status
 from node_tools.cache_funcs import get_node_status
 from node_tools.cache_funcs import get_peer_status
 from node_tools.cache_funcs import load_cache_by_type
 from node_tools.data_funcs import do_announce_node
+from node_tools.data_funcs import find_moons
 from node_tools.data_funcs import update_runner
 from node_tools.node_funcs import get_moon_data
 from node_tools.node_funcs import load_moon_data
@@ -52,6 +51,7 @@ class mock_zt_api_client(object):
 
 # has_aging = False
 cache = Index(get_cachedir())
+moons = ['deadd738e6']
 max_age = NODE_SETTINGS['max_cache_age']
 utc_stamp = datetime.datetime.now(utc)  # use local time for console
 
@@ -137,7 +137,6 @@ def test_aging_not_available_warning_msg():
 
 
 def test_cache_loading():
-    moons = ['deadd738e6']
 
     def test_cache_is_empty():
         cache.clear()
@@ -171,21 +170,12 @@ def test_cache_loading():
         res = load_moon_data(cache, timeout=0)
         assert res is False
 
-    def test_find_fpn_moons():
-        moon_list = find_fpn_moons(cache, moons)
-        assert isinstance(moon_list, list)
-        assert len(moon_list) != 0
-        print(moon_list)
-
-    def test_get_active_moon():
-        Moon = get_active_moon(cache, moons)
-        assert isinstance(Moon, tuple)
-        assert Moon.role == 'MOON'
-        assert Moon.identity == 'deadd738e6'
-        print(Moon)
-
-    def test_do_announce_node():
-        do_announce_node(cache, moons)
+    # def test_get_active_moon():
+        # Moon = get_active_moon(cache, moons)
+        # assert isinstance(Moon, tuple)
+        # assert Moon.role == 'MOON'
+        # assert Moon.identity == 'deadd738e6'
+        # print(Moon)
 
     def test_cache_size():
         size = len(cache)
@@ -198,9 +188,9 @@ def test_cache_loading():
     test_load_cache_net()
     test_find_keys()
     test_load_moon_data()
-    test_find_fpn_moons()
-    test_get_active_moon()
-    test_do_announce_node()
+    # test_find_moons()
+    # test_get_active_moon()
+    # test_do_announce_node()
     test_cache_size()
 
 
@@ -229,6 +219,21 @@ def test_get_net_status():
         assert isinstance(Net, tuple)
         assert hasattr(Net, 'mac')
         assert hasattr(Net, 'gateway')
+
+
+def test_find_moons():
+    moon_list = find_moons(moons)
+    assert isinstance(moon_list, list)
+    assert len(moon_list) != 0
+    assert isinstance(moon_list[0], tuple)
+    assert moon_list[0].role == 'MOON'
+    assert moon_list[0].identity == 'deadd738e6'
+    # print(moon_list)
+
+
+def test_do_announce_node():
+    res = do_announce_node(moons)
+    assert res == 'OK'
 
 
 # res = update_state()

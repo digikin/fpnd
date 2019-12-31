@@ -9,7 +9,6 @@ from node_tools.helper_funcs import NODE_SETTINGS
 
 
 logger = logging.getLogger(__name__)
-id_list = NODE_SETTINGS['moon_list']
 
 
 def create_cache_entry(cache, data, key_str):
@@ -33,42 +32,6 @@ def find_keys(cache, key_str):
         return None
     else:
         return key_types
-
-
-def find_fpn_moons(cache, id_list):
-    """
-    Find fpn moons using cached peer data.
-    :param cache: <cache> object
-    :param id_list: list of moon IDs from settings
-    :return moons: list of namedTuples for matching moons
-    """
-    moons = []
-    peers = get_peer_status(cache)
-    if peers:
-        for Peer in peers:
-            if 'MOON' in Peer.role:
-                logger.debug('Found moon in peers: {}'.format(Peer.identity))
-                for id in id_list:
-                    if Peer.identity == id:
-                        moons.append(Peer)
-                logger.debug('Exiting with Peer: {}'.format(moons))
-    return moons
-
-
-def get_active_moon(cache, id_list):
-    """
-    Get matching fpn moon ID and IP address from cached peer data.
-    :param cache: <cache> object
-    :return tuple: peer data namedTuple for first active moon
-    """
-    result = ()
-    moons = find_fpn_moons(cache, id_list)
-    if moons:
-        for Moon in moons:
-            if Moon.active:
-                result = Moon
-                break
-    return result
 
 
 def get_endpoint_data(cache, key_str):
