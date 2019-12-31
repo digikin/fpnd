@@ -13,6 +13,7 @@ import schedule
 from daemon import Daemon
 from daemon.parent_logger import setup_logging
 
+from node_tools.data_funcs import do_announce_node, do_log_node_data
 from node_tools.data_funcs import update_runner
 from node_tools.helper_funcs import NODE_SETTINGS
 from node_tools.network_funcs import get_net_cmds
@@ -99,7 +100,8 @@ def setup_scheduling(max_age):
 
 def do_scheduling():
     logger.debug('Entering do_scheduling')
-    schedule.run_all(10)
+    schedule.run_all()
+    do_log_node_data(cache)
     time.sleep(5)
 
     for moon in moons:
@@ -107,7 +109,9 @@ def do_scheduling():
 
     moon_list = get_moon_data()
     logger.debug('Moon data size: {}'.format(len(moon_list)))
-    logger.debug('Moon data type is now: {}'.format(type(moon_list)))
+    logger.debug('Moon data type is: {}'.format(type(moon_list)))
+
+    do_announce_node(cache, moons)
 
     logger.debug('Entering schedule.run_pending loop')
     while True:

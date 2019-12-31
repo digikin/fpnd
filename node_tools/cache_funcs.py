@@ -5,9 +5,11 @@ import logging
 from collections import namedtuple
 
 from node_tools.helper_funcs import AttrDict
+from node_tools.helper_funcs import NODE_SETTINGS
 
 
 logger = logging.getLogger(__name__)
+id_list = NODE_SETTINGS['moon_list']
 
 
 def create_cache_entry(cache, data, key_str):
@@ -33,13 +35,49 @@ def find_keys(cache, key_str):
         return key_types
 
 
+def find_fpn_moons(cache, id_list):
+    """
+    Find fpn moons using cached peer data.
+    :param cache: <cache> object
+    :param id_list: list of moon IDs from settings
+    :return moons: list of namedTuples for matching moons
+    """
+    moons = []
+    peers = get_peer_status(cache)
+    if peers:
+        for Peer in peers:
+            if 'MOON' in Peer.role:
+                logger.debug('Found moon in peers: {}'.format(Peer.identity))
+                for id in id_list:
+                    if Peer.identity == id:
+                        moons.append(Peer)
+                logger.debug('Exiting with Peer: {}'.format(moons))
+    return moons
+
+
+def get_active_moon(cache, id_list):
+    """
+    Get matching fpn moon ID and IP address from cached peer data.
+    :param cache: <cache> object
+    :return tuple: peer data namedTuple for first active moon
+    """
+    result = ()
+    moons = find_fpn_moons(cache, id_list)
+    if moons:
+        for Moon in moons:
+            if Moon.active:
+                result = Moon
+                break
+    return result
+
+
 def get_endpoint_data(cache, key_str):
     """
     Get all data for key type from cache.
-    :param: <cache> object
-    :param: desired 'key_str', one of
-            ['node'|'peer'|'net']
-    :return: tuple (list of [keys], list of [values])
+    :param cache: <cache> object
+    :param key_str: desired 'key_str', one of
+                    ['node'|'peer'|'net']
+    :return tuple: (list of [keys], list of [values])
     """
     logger.debug('Entering get_endpoint_data with key_str: {}'.format(key_str))
     values = []
@@ -58,10 +96,11 @@ def get_endpoint_data(cache, key_str):
 
 def get_net_status(cache):
     """
-    Get specific data for node endpoint 'network' from cache.
+    Get status data for node endpoint 'network' from cache, return a
+    list of namedTuples.
     """
     networks = []  # list of network namedTuples
-    Network = namedtuple('Network', 'id status mac ztdevice gateway')
+    Network = namedtuple('Network', 'identity status mac ztdevice gateway')
     key_list, values = get_endpoint_data(cache, 'net')
     if key_list:
         for key, data in zip(key_list, values):
@@ -77,10 +116,11 @@ def get_net_status(cache):
 
 def get_node_status(cache):
     """
-    Get specific data for node endpoint 'status' from cache.
+    Get data for node endpoint 'status' from cache, return a
+    namedTuple.
     """
     node_data = []
-    Node = namedtuple('Node', 'id status tcpFallback worldId')
+    Node = namedtuple('Node', 'identity status tcpFallback worldId')
     key_list, values = get_endpoint_data(cache, 'node')
     if values:
         d = values[0]
@@ -95,10 +135,11 @@ def get_node_status(cache):
 
 def get_peer_status(cache):
     """
-    Get specific data for node endpoint 'peer' from cache.
+    Get status data for node endpoint 'peer' from cache, return a
+    list of namedTuples.
     """
     peers = []  # list of peer namedTuples
-    Peer = namedtuple('Peer', 'id role active address port')
+    Peer = namedtuple('Peer', 'identity role active address port')
     key_list, values = get_endpoint_data(cache, 'peer')
     if key_list:
         for key, data in zip(key_list, values):

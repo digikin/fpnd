@@ -8,6 +8,8 @@ import datetime
 import functools
 
 from diskcache import Index
+
+from node_tools.cache_funcs import get_active_moon, get_node_status
 from node_tools.helper_funcs import update_state, get_cachedir
 from node_tools.helper_funcs import ENODATA, NODE_SETTINGS
 
@@ -22,6 +24,19 @@ except ImportError:
 logger = logging.getLogger(__name__)
 cache = Index(get_cachedir())
 max_age = NODE_SETTINGS['max_cache_age']
+moon_list = NODE_SETTINGS['moon_list']
+
+
+def do_announce_node(cache, moon_list):
+    Moon = get_active_moon(cache, moon_list)
+    if Moon:
+        # send nanoservice client request
+        logger.debug('Send msg to {} with addr: {}'.format(Moon.identity, Moon.address))
+
+
+def do_log_node_data(cache):
+    nodeStatus = get_node_status(cache)
+    logger.debug('Node status tuple: {}'.format(nodeStatus))
 
 
 def do_logstats(msg=None):
